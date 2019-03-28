@@ -1,6 +1,10 @@
-# -*- coding: utf-8 -*-
+'''
+Purpose: this program contains USD yield curve class
+Update:
+Author: Mengheng
+Date: 03/26/2019
+'''
 
-import datetime
 from dateutil.relativedelta import relativedelta
 from USDYieldCurveDate import USDYieldCurveDate
 import math
@@ -8,16 +12,18 @@ import logging
 
 
 class USDYieldCurve(USDYieldCurveDate):
-    def __init__(self, depo_rates, futures_prices, holiday_calendar, trade_date):
-        if len(locals()) != 4:
+    # arguments: depo_rates, futures_prices, holiday_calendar, trade_date
+    def __init__(self, *args):
+        if len(args) != 4:
             logging.error('Cannot build curve from given inputs.')
+            exit()
         else:
             self._deposit_rates = []
             self._future_price_rates = []
             self._holiday_list = []
-            super(USDYieldCurve, self).__init__(holiday_calendar, trade_date)
-            self.read_depo_rates(depo_rates)
-            self.read_futures_prices(futures_prices)
+            super(USDYieldCurve, self).__init__(args[2], args[3]) # args: holiday_calendar, trade_date
+            self.read_depo_rates(args[0])
+            self.read_futures_prices(args[1])
 
     @property
     def deposit_rates(self):

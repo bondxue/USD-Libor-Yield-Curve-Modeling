@@ -1,13 +1,20 @@
+'''
+Purpose: This program contains USD yield curve date class
+Update:
+Author: Mengheng
+Date: 03/26/2019
+'''
+
 import datetime
+import logging
 
 
 class USDYieldCurveDate(object):
-    def __init__(self, holiday_calendar, trade_date):
+    def __init__(self, *args): # args: holiday_calendar, trade_date
         self._holiday_list = []
-        self._trade_date = trade_date
-        self._spot_date = self.calculate_spot_date(trade_date)
-        self.read_holiday_calendar(holiday_calendar)
-
+        self._trade_date = args[1]
+        self._spot_date = self.calculate_spot_date(args[1])
+        self.read_holiday_calendar(args[0])
 
     @property
     def trade_date(self):
