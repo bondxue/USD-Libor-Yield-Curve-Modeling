@@ -2,17 +2,18 @@
 Purpose: this program contains USD yield curve class
 Update:  03/29/2019 Add print dfs_dates function
 Author: Mengheng
-Date: 03/26/2019
+Date: 03/29/2019
 '''
 
 from dateutil.relativedelta import relativedelta
 from USDYieldCurveDate import USDYieldCurveDate
+import datetime
 import math
 import logging
 
 
 class USDYieldCurve(USDYieldCurveDate):
-    # arguments: depo_rates, futures_prices, holiday_calendar, trade_date
+    # arguments: depo_rates, futures_prices, trade_date, holiday_calendar
     def __init__(self, *args):
         if len(args) != 4:
             logging.error('Cannot build curve from given inputs.')
@@ -20,8 +21,9 @@ class USDYieldCurve(USDYieldCurveDate):
         else:
             self._deposit_rates = []
             self._future_price_rates = []
+            self._trade_date = None
             self._holiday_list = []
-            super(USDYieldCurve, self).__init__(args[2], args[3])  # args: holiday_calendar, trade_date
+            super(USDYieldCurve, self).__init__(args[2], args[3])  # args: trade_date, holiday_calendar
             self.read_depo_rates(args[0])
             self.read_futures_prices(args[1])
 
@@ -78,10 +80,14 @@ class USDYieldCurve(USDYieldCurveDate):
     def df_future_expiry(self):
         df_future_expiry = []
         date_depo_max = self.deposit_rates[-1][0]
+        date_depo_min = self.deposit_rates[0][0]
+        date_first_future = self.future_prices_rates[0][0]
+        if date_first_future <= date_depo_min or date_first_future >= date_depo_max:
+            logging.error("Insufficient LIBOR cash rate data.")
+            return None
         for i in range(len(self.future_prices_rates)):
             date = self.future_prices_rates[i][0]
-            # TODO: NEED TO CHANGE THE IF CONDITION
-            if date < date_depo_max:  #
+            if not df_future_expiry:  # df_future_expiry is empty
                 for j in range(len(self.deposit_rates) - 1):
                     date1 = self.deposit_rates[j][0]
                     date2 = self.deposit_rates[j + 1][0]
@@ -93,7 +99,7 @@ class USDYieldCurve(USDYieldCurveDate):
                         df = math.exp(math.log(df_date1) + (date - date1) / (date2 - date1) * (
                                 math.log(df_date2) - math.log(df_date1)))
                         df_future_expiry.append((date, df))
-                    break
+                        break
             else:
                 df = df_future_expiry[i - 1][1] / (1 + self.future_prices_rates[i - 1][2] * (
                         date - self.future_prices_rates[i - 1][0]).days / 360.0)
@@ -104,53 +110,84 @@ class USDYieldCurve(USDYieldCurveDate):
     def get_dfs_dates(self):
         df_mature_dates = self.df_mature_dates()
         df_future_expiry = self.df_future_expiry()
-        df_dates = sorted(df_mature_dates + df_future_expiry, key=lambda tup: tup[0])
-        return df_dates
+        if df_future_expiry is None:
+            return None
+        else:
+            df_dates = sorted(df_mature_dates + df_future_expiry, key=lambda tup: tup[0])
+            return df_dates
 
     # print dfs_dates
     def print_dfs_dates(self):
         dfs_dates = self.get_dfs_dates()
-        for i in range(len(dfs_dates)):
-            print(dfs_dates[i][0], self.round_up(dfs_dates[i][1]))
+        if dfs_dates is None:
+            return None
+        else:
+            for i in range(len(dfs_dates)):
+                print(dfs_dates[i][0], self.round_up(dfs_dates[i][1]))
 
     # function to get the discount factor to one date
     def get_df_date(self, date):
         date = self.modified_following(date)  # get the next business date
         dfs_dates = self.get_dfs_dates()
-        date_max = dfs_dates[-1][0]  # last date discount factor curve defined
-        if date < self.spot_date or date > date_max:
-            logging.error(
-                'Input date should be larger than {spot} and less than {last}'.format(spot=str(self.spot_date),
-                                                                                      last=str(date_max)))
+        if dfs_dates is None:
+            return None
         else:
+            date_max = dfs_dates[-1][0]  # last date discount factor curve defined
+            if date < self.spot_date or date > date_max:
+                logging.error(
+                    'Input date should be larger than {spot} and less than {last}'.format(spot=str(self.spot_date),
+                                                                                          last=str(date_max)))
+            else:
+                for i in range(len(dfs_dates) - 1):
+                    date1 = dfs_dates[i][0]
+                    date2 = dfs_dates[i + 1][0]
+                    df_date1 = dfs_dates[i][1]
+                    df_date2 = dfs_dates[i + 1][1]
+                    if date == date1:  # date equals to the current df date
+                        df_date = df_date1
+                        return df_date
+                    elif date1 < date < date2:  # less than the next df to date
+                        df_date = math.exp(math.log(df_date1) + (date - date1) / (date2 - date1) * (
+                                math.log(df_date2) - math.log(df_date1)))
+                        return df_date
+                    elif date == date2:
+                        df_date = df_date2  # date equals to the next df date
+                        return df_date
 
-            for i in range(len(dfs_dates) - 1):
-                date1 = dfs_dates[i][0]
-                date2 = dfs_dates[i + 1][0]
-                df_date1 = dfs_dates[i][1]
-                df_date2 = dfs_dates[i + 1][1]
-                if date == date1:  # date equals to the current df date
-                    df_date = df_date1
-                    return df_date
-                elif date1 < date < date2:  # less than the next df to date
-                    df_date = math.exp(math.log(df_date1) + (date - date1) / (date2 - date1) * (
-                            math.log(df_date2) - math.log(df_date1)))
-                    return df_date
-                elif date == date2:
-                    df_date = df_date2  # date equals to the next df date
-                    return df_date
+    # funciton for get the discount factor with str input
+    def getDfToDate(self, date_str):
+        ymd = date_str.strip().split('-')
+        date = datetime.date(int(ymd[0]), int(ymd[1]), int(ymd[2]))
+        df_date = self.get_df_date(date)
+        if df_date is None:
+            return None
+        else:
+            return self.round_up(df_date)
 
     # function to obtain forward rate
     def get_fwd_rate(self, date1, date2):
         if date1 > date2:
-            logging.error('function get_fwd_rate(): date2 should larger than date1.')
+            logging.error('function get_fwd_rate(): first parameter date should larger than the second one.')
         else:
-            # date1 = self.modified_following(date1)  # get the following business date
-            # date2 = self.modified_following(date2)  # get the folowing business date
             df_date1 = self.get_df_date(date1)
             df_date2 = self.get_df_date(date2)
-            fwd_rate = 360.0 / (date2 - date1).days * (df_date1 / df_date2 - 1.0)
-            return fwd_rate
+            if df_date1 is None or df_date2 is None:
+                return None
+            else:
+                fwd_rate = 360.0 / (date2 - date1).days * (df_date1 / df_date2 - 1.0)
+                return fwd_rate
+
+    # function to obtain forward rate with str inputs
+    def getFwdRate(self, date1_str, date2_str):
+        ymd1 = date1_str.strip().split('-')
+        ymd2 = date2_str.strip().split('-')
+        date1 = datetime.date(int(ymd1[0]), int(ymd1[1]), int(ymd1[2]))
+        date2 = datetime.date(int(ymd2[0]), int(ymd2[1]), int(ymd2[2]))
+        fwd_rate = self.get_fwd_rate(date1, date2)
+        if fwd_rate is None:
+            return None
+        else:
+            return self.round_up(fwd_rate)
 
     # function to modify round()
     @staticmethod

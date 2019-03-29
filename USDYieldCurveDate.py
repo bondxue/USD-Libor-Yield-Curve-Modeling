@@ -2,7 +2,7 @@
 Purpose: This program contains USD yield curve date class
 Update:
 Author: Mengheng
-Date: 03/26/2019
+Date: 03/29/2019
 '''
 
 import datetime
@@ -10,11 +10,12 @@ import logging
 
 
 class USDYieldCurveDate(object):
-    def __init__(self, *args): # args: holiday_calendar, trade_date
+    def __init__(self, *args):  # args: holiday_calendar, trade_date
         self._holiday_list = []
-        self._trade_date = args[1]
-        self._spot_date = self.calculate_spot_date(args[1])
-        self.read_holiday_calendar(args[0])
+        self._trade_date = None
+        self.read_trade_date(args[0])
+        self._spot_date = self.calculate_spot_date(self.trade_date)
+        self.read_holiday_calendar(args[1])
 
     @property
     def trade_date(self):
@@ -27,6 +28,13 @@ class USDYieldCurveDate(object):
     @property
     def holiday_list(self):
         return self._holiday_list
+
+    # function to read trade date
+    def read_trade_date(self, trade_date):
+        with open(trade_date, 'r') as fp:
+            for row in fp:
+                ymd = row.strip().split('-')
+                self._trade_date = datetime.date(int(ymd[0]), int(ymd[1]), int(ymd[2]))
 
     # function to read holidayCalendar file
     def read_holiday_calendar(self, holiday_calendar):
