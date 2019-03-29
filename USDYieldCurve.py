@@ -1,6 +1,6 @@
 '''
 Purpose: this program contains USD yield curve class
-Update:
+Update:  03/29/2019 Add print dfs_dates function
 Author: Mengheng
 Date: 03/26/2019
 '''
@@ -21,7 +21,7 @@ class USDYieldCurve(USDYieldCurveDate):
             self._deposit_rates = []
             self._future_price_rates = []
             self._holiday_list = []
-            super(USDYieldCurve, self).__init__(args[2], args[3]) # args: holiday_calendar, trade_date
+            super(USDYieldCurve, self).__init__(args[2], args[3])  # args: holiday_calendar, trade_date
             self.read_depo_rates(args[0])
             self.read_futures_prices(args[1])
 
@@ -70,7 +70,7 @@ class USDYieldCurve(USDYieldCurveDate):
     def df_mature_dates(self):
         df_mature_dates = []
         for i in range(len(self.deposit_rates)):
-            df = 1 / (1 + self.deposit_rates[i][1] * ((self.deposit_rates[i][0] - self.spot_date).days) / 36000)
+            df = 1 / (1 + self.deposit_rates[i][1] * (self.deposit_rates[i][0] - self.spot_date).days / 36000.0)
             df_mature_dates.append((self.deposit_rates[i][0], df))
         return df_mature_dates
 
@@ -88,15 +88,15 @@ class USDYieldCurve(USDYieldCurveDate):
                     deposit_rate_date1 = self.deposit_rates[j][1]
                     deposit_rate_date2 = self.deposit_rates[j + 1][1]
                     if date1 < date < date2:
-                        df_date1 = 1 / (1 + deposit_rate_date1 * (date1 - self.spot_date).days / 36000)
-                        df_date2 = 1 / (1 + deposit_rate_date2 * (date2 - self.spot_date).days / 36000)
+                        df_date1 = 1 / (1 + deposit_rate_date1 * (date1 - self.spot_date).days / 36000.0)
+                        df_date2 = 1 / (1 + deposit_rate_date2 * (date2 - self.spot_date).days / 36000.0)
                         df = math.exp(math.log(df_date1) + (date - date1) / (date2 - date1) * (
                                 math.log(df_date2) - math.log(df_date1)))
                         df_future_expiry.append((date, df))
                     break
             else:
                 df = df_future_expiry[i - 1][1] / (1 + self.future_prices_rates[i - 1][2] * (
-                        date - self.future_prices_rates[i - 1][0]).days / 360)
+                        date - self.future_prices_rates[i - 1][0]).days / 360.0)
                 df_future_expiry.append((date, df))
         return df_future_expiry
 
@@ -107,8 +107,15 @@ class USDYieldCurve(USDYieldCurveDate):
         df_dates = sorted(df_mature_dates + df_future_expiry, key=lambda tup: tup[0])
         return df_dates
 
-    # function to get the discount factor
+    # print dfs_dates
+    def print_dfs_dates(self):
+        dfs_dates = self.get_dfs_dates()
+        for i in range(len(dfs_dates)):
+            print(dfs_dates[i][0], self.round_up(dfs_dates[i][1]))
+
+    # function to get the discount factor to one date
     def get_df_date(self, date):
+        date = self.modified_following(date)  # get the next business date
         dfs_dates = self.get_dfs_dates()
         date_max = dfs_dates[-1][0]  # last date discount factor curve defined
         if date < self.spot_date or date > date_max:
@@ -136,9 +143,16 @@ class USDYieldCurve(USDYieldCurveDate):
     # function to obtain forward rate
     def get_fwd_rate(self, date1, date2):
         if date1 > date2:
-            logging.error('date2 should larger than date1.')
+            logging.error('function get_fwd_rate(): date2 should larger than date1.')
         else:
+            # date1 = self.modified_following(date1)  # get the following business date
+            # date2 = self.modified_following(date2)  # get the folowing business date
             df_date1 = self.get_df_date(date1)
-            df_date2 = self.get_df_date(date1)
-            fwd_rate = 360 * (df_date1 / df_date2 - 1) / (date2 - date1).days
+            df_date2 = self.get_df_date(date2)
+            fwd_rate = 360.0 / (date2 - date1).days * (df_date1 / df_date2 - 1.0)
             return fwd_rate
+
+    # function to modify round()
+    @staticmethod
+    def round_up(value):
+        return round(value * 1000000000) / 1000000000.0

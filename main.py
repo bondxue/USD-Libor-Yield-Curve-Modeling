@@ -4,7 +4,7 @@ Update:
 Author: Mengheng
 Date: 03/26/2019
 '''
-
+from __future__ import division
 from USDYieldCurve import USDYieldCurve
 from USDYieldCurveDate import USDYieldCurveDate
 import datetime
@@ -33,16 +33,17 @@ def main():
     # # # print(usd_curve.holiday_list)
     # # print(usd_curve.df_mature_dates())
     # # print(usd_curve.df_future_expiry())
-    for i in range(len(usd_curve.get_dfs_dates())):
-        print(usd_curve.get_dfs_dates()[i])
+    # usd_curve.print_dfs_dates()
     #
     # print('\n')
     date1 = datetime.date(2016, 3, 20)
-    # date2 = datetime.date(2015, 6, 17)
-    # date3 = datetime.date(2015, 9, 15)
+    date2 = datetime.date(2016, 3, 20)
+    date3 = datetime.date(2017, 2, 2)
     print(usd_curve.get_df_date(date1))
+    print(usd_curve.get_fwd_rate(date2, date3))
     # print(usd_curve.get_df_date(date2))
     # print(usd_curve.get_df_date(date3))
+    # print(usd_curve.get_df_date(date2)/usd_curve.get_df_date(date3)-1.0)
 
     # usd_curve2 = USDYieldCurve('depoRates.txt', 'holidayCalendar.txt', trade_date)
     # print(usd_curve2.future_prices_rates)
