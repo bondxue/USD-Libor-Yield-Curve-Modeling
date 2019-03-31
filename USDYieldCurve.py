@@ -127,11 +127,12 @@ class USDYieldCurve(USDYieldCurveDate):
 
     # function to get the discount factor to one date
     def get_df_date(self, date):
-        date = self.modified_following(date)  # get the next business date
         dfs_dates = self.get_dfs_dates()
         if dfs_dates is None:
             return None
         else:
+            if self.is_holiday(date):
+                logging.error('{date} is a holiday'.format(date=date))
             date_max = dfs_dates[-1][0]  # last date discount factor curve defined
             if date < self.spot_date or date > date_max:
                 logging.error(
@@ -168,9 +169,9 @@ class USDYieldCurve(USDYieldCurveDate):
     def get_fwd_rate(self, date1, date2):
         if date1 > date2:
             logging.error('function get_fwd_rate(): first parameter date should larger than the second one.')
-        elif self.is_holiday(date1) or self.is_holiday(date2):
-            logging.error('function get_fwd_rate(): input should not be holidays.')
         else:
+            if self.is_holiday(date1) or self.is_holiday(date2):
+                logging.error('function get_fwd_rate(): input should not be holidays.')
             df_date1 = self.get_df_date(date1)
             df_date2 = self.get_df_date(date2)
             if df_date1 is None or df_date2 is None:
