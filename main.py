@@ -17,12 +17,12 @@ def main():
     usd_curve = USDYieldCurve('depoRates.txt', 'futuresPrices.txt', 'tradeDate.txt', 'holidayCalendar.txt')
     # print(usd_curve.df_future_expiry())
     # print(usd_curve.get_dfs_dates())
-    # usd_curve.print_dfs_dates()
+    usd_curve.print_dfs_dates()
     # print('\n')
     # print(usd_curve.deposit_rates)
     # print(usd_curve.getDfToDate("2015-12-1"))
-    print(usd_curve.getDfToDate("2018-2-1"))
-    # print(usd_curve.getFwdRate("2016-12-1", "2016-2-1"))
+    # print(usd_curve.getDfToDate("2018-2-1"))
+    print(usd_curve.getFwdRate("2015-10-3", "2015-2-1"))
     #
     # # test error case that given input is incomplete for bulid curve
     # usd_curve2 = USDYieldCurve('depoRates.txt', 'futuresPrices.txt', 'holidayCalendar.txt')

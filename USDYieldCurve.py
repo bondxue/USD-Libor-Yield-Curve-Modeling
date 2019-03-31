@@ -168,6 +168,8 @@ class USDYieldCurve(USDYieldCurveDate):
     def get_fwd_rate(self, date1, date2):
         if date1 > date2:
             logging.error('function get_fwd_rate(): first parameter date should larger than the second one.')
+        elif self.is_holiday(date1) or self.is_holiday(date2):
+            logging.error('function get_fwd_rate(): input should not be holidays.')
         else:
             df_date1 = self.get_df_date(date1)
             df_date2 = self.get_df_date(date2)
