@@ -38,7 +38,9 @@ class USDYieldCurve(USDYieldCurveDate):
     # function to read depoRate file
     def read_depo_rates(self, depo_rates):
         with open(depo_rates, 'r') as fp:
-            for row in fp:
+            rows = (line.rstrip() for line in fp)  # All lines including the blank ones
+            rows = (line for line in rows if line)  # Non-blank lines
+            for row in rows:
                 item = row.strip().split('\t')
                 if item[0][-1] == 'D':
                     date_to_mature = relativedelta(days=int(item[0][-2]))
@@ -52,7 +54,9 @@ class USDYieldCurve(USDYieldCurveDate):
     # function to read futurePrice file
     def read_futures_prices(self, futures_prices):
         with open(futures_prices, 'r') as fp:
-            for row in fp:
+            rows = (line.rstrip() for line in fp)  # All lines including the blank ones
+            rows = (line for line in rows if line)  # Non-blank lines
+            for row in rows:
                 item = row.strip().split('\t')
                 year = 2010 + int(item[0][-1])
                 if item[0][-2] == 'H':

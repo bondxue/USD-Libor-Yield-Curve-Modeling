@@ -32,14 +32,18 @@ class USDYieldCurveDate(object):
     # function to read trade date
     def read_trade_date(self, trade_date):
         with open(trade_date, 'r') as fp:
-            for row in fp:
+            rows = (line.rstrip() for line in fp)  # All lines including the blank ones
+            rows = (line for line in rows if line)  # Non-blank lines
+            for row in rows:
                 ymd = row.strip().split('-')
                 self._trade_date = datetime.date(int(ymd[0]), int(ymd[1]), int(ymd[2]))
 
     # function to read holidayCalendar file
     def read_holiday_calendar(self, holiday_calendar):
         with open(holiday_calendar, 'r') as fp:
-            for row in fp:
+            rows = (line.rstrip() for line in fp)  # All lines including the blank ones
+            rows = (line for line in rows if line)  # Non-blank lines
+            for row in rows:
                 ymd = row.strip().split('-')
                 date_item = datetime.date(int(ymd[0]), int(ymd[1]), int(ymd[2]))
                 self._holiday_list.append(date_item)
