@@ -17,7 +17,7 @@ class USDYieldCurve(USDYieldCurveDate):
     def __init__(self, *args):
         if len(args) != 4:
             logging.error('Cannot build curve from given inputs.')
-            exit()
+            return
         else:
             self._deposit_rates = []
             self._future_price_rates = []
@@ -74,7 +74,7 @@ class USDYieldCurve(USDYieldCurveDate):
 
     # get discount factors for deposit mature dates
     def df_mature_dates(self):
-        df_mature_dates = []
+        df_mature_dates = [(self.spot_date, 1.0)]
         for i in range(len(self.deposit_rates)):
             df = 1 / (1 + self.deposit_rates[i][1] * (self.deposit_rates[i][0] - self.spot_date).days / 36000.0)
             df_mature_dates.append((self.deposit_rates[i][0], df))
@@ -135,14 +135,15 @@ class USDYieldCurve(USDYieldCurveDate):
         if dfs_dates is None:
             return None
         else:
-            if self.is_holiday(date):
-                logging.error('{date} is a holiday'.format(date=date))
             date_max = dfs_dates[-1][0]  # last date discount factor curve defined
-            if date < self.spot_date or date > date_max:
+            date_min = dfs_dates[0][0] # first date discount factor curve defined
+            if date < date_min or date > date_max:
                 logging.error(
-                    'Input date should be larger than {spot} and less than {last}'.format(spot=str(self.spot_date),
+                    'Input date should be between {first} and {last}.'.format(first=str(date_min),
                                                                                           last=str(date_max)))
             else:
+                if self.is_holiday(date):
+                    logging.warning('{date} is a holiday'.format(date=date))
                 for i in range(len(dfs_dates) - 1):
                     date1 = dfs_dates[i][0]
                     date2 = dfs_dates[i + 1][0]
@@ -172,10 +173,10 @@ class USDYieldCurve(USDYieldCurveDate):
     # function to obtain forward rate
     def get_fwd_rate(self, date1, date2):
         if date1 > date2:
-            logging.error('function get_fwd_rate(): first parameter date should larger than the second one.')
+            logging.error('First parameter date should be larger than the second one.')
         else:
             if self.is_holiday(date1) or self.is_holiday(date2):
-                logging.error('function get_fwd_rate(): input should not be holidays.')
+                logging.warning('Input dates include holidays.')
             df_date1 = self.get_df_date(date1)
             df_date2 = self.get_df_date(date2)
             if df_date1 is None or df_date2 is None:
