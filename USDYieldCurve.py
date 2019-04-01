@@ -160,7 +160,7 @@ class USDYieldCurve(USDYieldCurveDate):
                         df_date = df_date2  # date equals to the next df date
                         return df_date
 
-    # funciton for get the discount factor with str input
+    # funciton for get the discount factor with string input
     def getDfToDate(self, date_str):
         ymd = date_str.strip().split('-')
         date = datetime.date(int(ymd[0]), int(ymd[1]), int(ymd[2]))
@@ -185,7 +185,7 @@ class USDYieldCurve(USDYieldCurveDate):
                 fwd_rate = 360.0 / (date2 - date1).days * (df_date1 / df_date2 - 1.0)
                 return fwd_rate
 
-    # function to obtain forward rate with str inputs
+    # function to obtain forward rate with string inputs
     def getFwdRate(self, date1_str, date2_str):
         ymd1 = date1_str.strip().split('-')
         ymd2 = date2_str.strip().split('-')

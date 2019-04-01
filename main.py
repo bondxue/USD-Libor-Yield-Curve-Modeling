@@ -34,7 +34,7 @@ def main():
     print(usdCurve.get_dfs_dates())
     print(usdCurve.getDfToDate('2015-5-1'))
     print(usdCurve.getFwdRate('2015-12-1', '2016-2-1'))
-    usdCurve.print_dfs_dates()
+    # usdCurve.print_dfs_dates()
 
 
     # # test error case that given input is incomplete for bulid curve
