@@ -27,7 +27,7 @@ This project consists of the following files:
 * `main.py` - contains the testing program.
 * `YCtestcase.xlsm` - contains the testing case data. 
 
-#### Project implementation
+### Project implementation
 This project cound imprt into Python3 environment and run via the commends
 ```python
 import USDYieldCurve
