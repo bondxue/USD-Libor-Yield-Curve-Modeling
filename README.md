@@ -1,5 +1,5 @@
 # USD-Libor-Yield-Curve-Modeling
-Computational Finance Laboratroy (Python）Final Project
+Computational Finance Laboratroy (Python) Final Project
 
 ## Summary
 * [Project purpose](#abs-background-purpose)
